@@ -77,13 +77,15 @@ struct DoSomeMath
 
 using Composite = mixin::composite<
     mixin::impl<ImplementingFooAndBar, DoSomeMath>,
-    FooIf,
-    BarIf
+    mixin::iface<FooIf, BarIf>
 >;
 
 TEST_CASE("Can call interface methods", "[mixin][composite]")
 {
-    Composite comp;
+    auto comp = mixin::make_composite<FooIf, BarIf>(
+        ImplementingFooAndBar{}, DoSomeMath{}
+    );
+
     auto &impl = comp.get<ImplementingFooAndBar>();
 
     REQUIRE(impl.fooCalled == false);

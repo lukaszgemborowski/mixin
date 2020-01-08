@@ -15,18 +15,21 @@ struct impl
     using tuple_t = std::tuple<Impl...>;
 };
 
+template<template<typename> typename...>
+struct iface {};
+
 template<class Sign>
 struct top_hierarchy {
     using sign_t = Sign;
 };
 
-template<class Impl, template<typename> typename... If>
+template<class Impl, class Iface>
 struct composite;
 
-template<class Impl, template<typename> typename... If>
+template<class Impl, class Iface>
 struct composite_signature
 {
-    using composite_t = composite<Impl, If...>;
+    using composite_t = composite<Impl, Iface>;
     using impl_tuple_t = typename Impl::tuple_t;
 };
 
@@ -45,19 +48,39 @@ struct interface_base<Sign, Last>
     using sign_t = Sign;
 };
 
-template<class Impl, template<typename> typename... If>
-struct composite
-    : public interface_base<composite_signature<Impl, If...>, If...>
+template<
+    class... Impl,
+    template<typename> typename... Iface>
+struct composite<impl<Impl...>, iface<Iface...>>
+    : public interface_base<
+        composite_signature<impl<Impl...>, iface<Iface...>>, Iface...>
 {
+    composite() = default;
+    composite(Impl&&... init)
+        : impl{std::forward<Impl>(init)...}
+    {}
+
     template<class T>
     auto & get()
     {
         return std::get<T>(impl);
     }
 
-    typename Impl::tuple_t impl;
+    typename impl<Impl...>::tuple_t impl;
 };
 
+template<
+    template<typename> typename... Iface,
+    typename... Impl>
+auto make_composite(Impl&&... init)
+{
+    return composite<
+        impl<Impl...>,
+        iface<Iface...>
+    >{std::forward<Impl>(init)...};
+}
+
+// accessors
 template<class T>
 struct implements
 {
