@@ -1,6 +1,7 @@
 #ifndef MIXIN_MIXIN_HPP
 #define MIXIN_MIXIN_HPP
 
+#include <mixin/tuple_for_each.hpp>
 #include <mixin/tuple_select.hpp>
 #include <mixin/list.hpp>
 #include <tuple>
@@ -57,29 +58,6 @@ struct composite
     typename Impl::tuple_t impl;
 };
 
-namespace detail
-{
-template<std::size_t I, class Base, class Selector, class F>
-void for_each(Base *self, Selector sel, F fun)
-{
-    using sign_t = typename Base::sign_t;
-    using comp_t = typename sign_t::composite_t;
-    using impl_tuple_t = typename sign_t::impl_tuple_t;
-    using impl_t = std::tuple_element_t<I, impl_tuple_t>;
-    auto &impl = static_cast<comp_t *>(self)->impl;
-
-    if constexpr (Selector::template invoke<impl_t>::value) {
-        fun(std::get<I>(impl));
-    }
-}
-
-template<class Base, class Selector, class F, std::size_t... Idx>
-void for_each(Base *self, Selector sel, F fun, std::index_sequence<Idx...>)
-{
-    (for_each<Idx>(self, sel, fun), ...);
-}
-} // namespace detail
-
 template<class T>
 struct implements
 {
@@ -92,13 +70,17 @@ void for_each(Base *self, Selector sel, F fun)
 {
     using sign_t = typename Base::sign_t;
     using comp_t = typename sign_t::composite_t;
-    using impl_t = typename sign_t::impl_tuple_t;
+    auto &impl = static_cast<comp_t *>(self)->impl;
 
-    detail::for_each(
-        self,
-        sel,
-        fun,
-        std::make_index_sequence<std::tuple_size_v<impl_t>>{}
+    tuple_for_each(
+        impl,
+        [fun](auto &e) {
+            using impl_t = std::decay_t<decltype(e)>;
+
+            if constexpr (Selector::template invoke<impl_t>::value) {
+                fun(e);
+            }
+        }
     );
 }
 
