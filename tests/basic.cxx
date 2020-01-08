@@ -3,6 +3,7 @@
 
 struct Fooable {};
 struct Barable {};
+struct Mathable {};
 
 template<class T>
 struct FooIf : T
@@ -14,6 +15,17 @@ struct FooIf : T
             mixin::implements<Fooable>{},
             [this](auto &impl) {
                 impl.foo(*this);
+            }
+        );
+    }
+
+    int do_math(int a, int b)
+    {
+        return execute(
+            this,
+            mixin::implements<Mathable>{},
+            [this, a, b](auto &impl) {
+                return impl.do_math(*this, a, b);
             }
         );
     }
@@ -52,8 +64,19 @@ struct ImplementingFooAndBar
     bool barCalled = false;
 };
 
+struct DoSomeMath
+{
+    using implements = mixin::list<Mathable>;
+
+    template<class A>
+    int do_math(A&, int a, int b)
+    {
+        return a + b;
+    }
+};
+
 using Composite = mixin::composite<
-    mixin::impl<ImplementingFooAndBar>,
+    mixin::impl<ImplementingFooAndBar, DoSomeMath>,
     FooIf,
     BarIf
 >;
@@ -75,4 +98,6 @@ TEST_CASE("Can call interface methods", "[mixin][composite]")
 
     REQUIRE(impl.fooCalled == true);
     REQUIRE(impl.barCalled == true);
+
+    REQUIRE(comp.do_math(40, 2) == 42);
 }

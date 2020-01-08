@@ -84,6 +84,23 @@ void for_each(Base *self, Selector sel, F fun)
     );
 }
 
+template<class Base, class Selector, class F>
+auto execute(Base *self, Selector sel, F fun)
+{
+    using sign_t = typename Base::sign_t;
+    using comp_t = typename sign_t::composite_t;
+    auto &impl = static_cast<comp_t *>(self)->impl;
+
+    auto result = tuple_select_ref<Selector>(impl);
+    static_assert(
+        std::tuple_size_v<decltype(result)> == 1,
+        "can't execute more than 1 element"
+    );
+
+    return fun(std::get<0>(result));
+}
+
+
 } // namespace mixin
 
 #endif // MIXIN_MIXIN_HPP
