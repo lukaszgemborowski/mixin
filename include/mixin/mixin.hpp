@@ -1,44 +1,22 @@
 #ifndef MIXIN_MIXIN_HPP
 #define MIXIN_MIXIN_HPP
 
+#include <mixin/list.hpp>
 #include <tuple>
 #include <type_traits>
 
 namespace mixin
 {
-
-// list begin
-template<class... Item> struct list;
-template<class Head, class... Tail> struct list<Head, Tail...>
-{
-    using head_t = Head;
-    using tail_t = list<Tail...>;
-};
-
-template<class List, class T> struct list_has
-{
-    using type_t =
-        std::conditional_t<
-            std::is_same_v<typename List::head_t, T>,
-            std::true_type,
-            typename list_has<typename List::tail_t, T>::type_t>;
-    static constexpr bool value = type_t::value;
-};
-
-template<class T> struct list_has<list<>, T>
-{
-    using type_t = std::false_type;
-    static constexpr bool value = false;
-};
-// list end
-
 template<class... Impl>
 struct impl
 {
     using tuple_t = std::tuple<Impl...>;
 };
 
-struct access {};
+template<class Sign>
+struct top_hierarchy {
+    using sign_t = Sign;
+};
 
 template<class Impl, template<typename> typename... If>
 struct composite;
@@ -59,7 +37,8 @@ struct interface_base : public Head<interface_base<Sign, Tail...>>
 };
 
 template<class Sign, template<typename> typename Last>
-struct interface_base<Sign, Last> : public Last<access>
+struct interface_base<Sign, Last>
+    : public Last<top_hierarchy<Sign>>
 {
     using sign_t = Sign;
 };
@@ -68,6 +47,12 @@ template<class Impl, template<typename> typename... If>
 struct composite
     : public interface_base<composite_signature<Impl, If...>, If...>
 {
+    template<class T>
+    auto & get()
+    {
+        return std::get<T>(impl);
+    }
+
     typename Impl::tuple_t impl;
 };
 
