@@ -58,7 +58,7 @@ using Composite = mixin::composite<
     BarIf
 >;
 
-TEST_CASE("", "[mixin][composite]")
+TEST_CASE("Can call interface methods", "[mixin][composite]")
 {
     Composite comp;
     auto &impl = comp.get<ImplementingFooAndBar>();
