@@ -2,6 +2,7 @@ add_executable(
     tests
     main.cxx
     basic.cxx
+    tuple_select.cxx
 )
 
 target_include_directories(

@@ -1,6 +1,7 @@
 #ifndef MIXIN_MIXIN_HPP
 #define MIXIN_MIXIN_HPP
 
+#include <mixin/tuple_select.hpp>
 #include <mixin/list.hpp>
 #include <tuple>
 #include <type_traits>
