@@ -3,7 +3,12 @@
 
 struct Fooable {};
 struct Barable {};
-struct Mathable {};
+struct Mathable {
+    using args = mixin::list<int, int>;
+
+    template<class C> constexpr static auto addr() { return &C::do_math; };
+    template<class C> using name = decltype(&C::do_math);
+};
 
 template<class T>
 struct FooIf : T

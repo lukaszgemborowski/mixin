@@ -3,6 +3,7 @@
 
 #include <mixin/tuple_for_each.hpp>
 #include <mixin/tuple_select.hpp>
+#include <mixin/ability.hpp>
 #include <mixin/list.hpp>
 #include <tuple>
 #include <type_traits>
