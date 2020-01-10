@@ -27,6 +27,11 @@ template<class T> struct list_has<list<>, T>
     using type_t = std::false_type;
     static constexpr bool value = false;
 };
+
+template<class L, class T> struct list_push_front
+{
+};
+
 } // namespace mixin
 
 #endif // MIXIN_LIST_HPP

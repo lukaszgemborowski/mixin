@@ -2,13 +2,13 @@
 #include "catch.hpp"
 
 struct Fooable {};
-struct Barable {};
-struct Mathable {
-    using args = mixin::list<int, int>;
+struct Barable {
+    using args = mixin::list<int>;
 
-    template<class C> constexpr static auto addr() { return &C::do_math; };
-    template<class C> using name = decltype(&C::do_math);
+    template<class C> constexpr static auto addr() { return &C::bar2; };
+    template<class C> using name = decltype(&C::bar2);
 };
+struct Mathable {};
 
 template<class T>
 struct FooIf : T
