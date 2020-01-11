@@ -54,4 +54,8 @@ void CallIfTraitMatch(C &c, B& base, Args... args)
 
 } // namespace mixin
 
+#define MIXIN_ABILITY_METHOD(NAME) \
+    template<class C, class B> constexpr static auto addr() { return &C::template NAME<B>; }; \
+    template<class C, class B> using name = decltype(&C::template NAME<B>);
+
 #endif // MIXIN_ABILITY_HPP

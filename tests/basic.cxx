@@ -6,10 +6,8 @@ struct Barable {};
 struct Mathable {};
 struct Autocallable
 {
+    MIXIN_ABILITY_METHOD(callable);
     using args = mixin::list<int>;
-
-    template<class C, class B> constexpr static auto addr() { return &C::template callable<B>; };
-    template<class C, class B> using name = decltype(&C::template callable<B>);
 };
 
 template<class T>
