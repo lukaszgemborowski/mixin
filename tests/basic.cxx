@@ -6,8 +6,10 @@ struct Barable {};
 struct Mathable {};
 struct Autocallable
 {
-    MIXIN_ABILITY_METHOD(callable);
-    using args = mixin::list<int>;
+    struct callable {
+        MIXIN_ABILITY_METHOD(callable);
+        using args = mixin::list<int>;
+    };
 };
 
 template<class T>
@@ -52,7 +54,7 @@ struct BarIf : T
 
     void callable(int value)
     {
-        mixin::for_each_ability<Autocallable>(this, value);
+        mixin::for_each_ability<Autocallable::callable>(this, value);
     }
 };
 
