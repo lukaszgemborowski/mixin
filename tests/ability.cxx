@@ -5,35 +5,38 @@ struct Trait
 {
     using args = mixin::list<int, char>;
 
-    template<class C> constexpr static auto addr() { return &C::bar; }
-    template<class C> using name = decltype(&C::bar);
+    template<class C, class B> constexpr static auto addr() { return &C::template bar<B>; }
+    template<class C, class B> using name = decltype(&C::template bar<B>);
+};
+
+struct Foo1 {
+    template<class>
+    void bar(int, char) {}
+};
+
+struct Foo2 {
+    template<class>
+    void foo(int, char) {}
+};
+
+struct Foo3 {
+    template<class>
+    void bar(float, double) {}
 };
 
 TEST_CASE("Properly match a method", "[ability]")
 {
-    struct Foo {
-        void bar(int, char) {}
-    };
-
-    REQUIRE(mixin::TraitHasMethod<Trait>::value<Foo> == true);
-    REQUIRE(mixin::TraitMatchArgs<Trait>::value<Foo> == true);
+    REQUIRE(mixin::TraitHasMethod<Trait>::value<Foo1, int> == true);
+    REQUIRE(mixin::TraitMatchArgs<Trait>::value<Foo1, int> == true);
 }
 
 TEST_CASE("Class does not have named method", "[ability]")
 {
-    struct Foo {
-        void foo(int, char) {}
-    };
-
-    REQUIRE(mixin::TraitHasMethod<Trait>::value<Foo> == false);
+    REQUIRE(mixin::TraitHasMethod<Trait>::value<Foo2, void> == false);
 }
 
 TEST_CASE("Class does not have method with proper arguments", "[ability]")
 {
-    struct Foo {
-        void bar(float, double) {}
-    };
-
-    REQUIRE(mixin::TraitHasMethod<Trait>::value<Foo> == true);
-    REQUIRE(mixin::TraitMatchArgs<Trait>::value<Foo> == false);
+    REQUIRE(mixin::TraitHasMethod<Trait>::value<Foo3, void> == true);
+    REQUIRE(mixin::TraitMatchArgs<Trait>::value<Foo3, void> == false);
 }

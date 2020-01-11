@@ -89,6 +89,12 @@ struct implements
     using invoke = list_has<typename Q::implements, T>;
 };
 
+struct all
+{
+    template<class>
+    using invoke = std::true_type;
+};
+
 template<class Base, class Selector, class F>
 void for_each(Base *self, Selector sel, F fun)
 {
@@ -122,6 +128,28 @@ auto execute(Base *self, Selector sel, F fun)
     );
 
     return fun(std::get<0>(result));
+}
+
+namespace detail
+{
+template<class BaseTrait, class FirstArg>
+struct Trait : BaseTrait {
+    using args = typename list_push_front<typename BaseTrait::args, FirstArg>::type_t;
+};
+} // namespace detail
+
+template<class Ability, class Base, class... Args>
+void for_each_ability(Base *self, Args&&... args)
+{
+    using Trait = detail::Trait<Ability, Base &>;
+
+    for_each(
+        self,
+        all {},
+        [self, &args...](auto &e) {
+            CallIfTraitMatch<Trait>(e, *self, std::forward<Args>(args)...);
+        }
+    );
 }
 
 

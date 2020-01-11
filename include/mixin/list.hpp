@@ -28,8 +28,10 @@ template<class T> struct list_has<list<>, T>
     static constexpr bool value = false;
 };
 
-template<class L, class T> struct list_push_front
+template<class L, class T> struct list_push_front {};
+template<class T, class... Args> struct list_push_front<list<Args...>, T>
 {
+    using type_t = list<T, Args...>;
 };
 
 } // namespace mixin

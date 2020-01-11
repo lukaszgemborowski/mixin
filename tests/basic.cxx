@@ -2,13 +2,15 @@
 #include "catch.hpp"
 
 struct Fooable {};
-struct Barable {
+struct Barable {};
+struct Mathable {};
+struct Autocallable
+{
     using args = mixin::list<int>;
 
-    template<class C> constexpr static auto addr() { return &C::bar2; };
-    template<class C> using name = decltype(&C::bar2);
+    template<class C, class B> constexpr static auto addr() { return &C::template callable<B>; };
+    template<class C, class B> using name = decltype(&C::template callable<B>);
 };
-struct Mathable {};
 
 template<class T>
 struct FooIf : T
@@ -49,6 +51,11 @@ struct BarIf : T
             }
         );
     }
+
+    void callable(int value)
+    {
+        mixin::for_each_ability<Autocallable>(this, value);
+    }
 };
 
 struct ImplementingFooAndBar
@@ -80,15 +87,23 @@ struct DoSomeMath
     }
 };
 
-using Composite = mixin::composite<
-    mixin::impl<ImplementingFooAndBar, DoSomeMath>,
-    mixin::iface<FooIf, BarIf>
->;
+struct CallableImpl
+{
+    using implements = mixin::list<Autocallable>;
+
+    template<class A>
+    void callable(A &, int value)
+    {
+        calledValue = value;
+    }
+
+    int calledValue = 0;
+};
 
 TEST_CASE("Can call interface methods", "[mixin][composite]")
 {
     auto comp = mixin::make_composite<FooIf, BarIf>(
-        ImplementingFooAndBar{}, DoSomeMath{}
+        ImplementingFooAndBar{}, DoSomeMath{}, CallableImpl{}
     );
 
     auto &impl = comp.get<ImplementingFooAndBar>();
@@ -107,4 +122,8 @@ TEST_CASE("Can call interface methods", "[mixin][composite]")
     REQUIRE(impl.barCalled == true);
 
     REQUIRE(comp.do_math(40, 2) == 42);
+
+    auto &c = comp.get<CallableImpl>();
+    comp.callable(42);
+    REQUIRE(c.calledValue == 42);
 }
