@@ -134,7 +134,10 @@ namespace detail
 {
 template<class BaseTrait, class FirstArg>
 struct Trait : BaseTrait {
-    using args = typename list_push_front<typename BaseTrait::args, FirstArg>::type_t;
+    using base_args = typename function_traits<typename BaseTrait::signature>::args_list_t;
+
+    using args = typename list_push_front<base_args, FirstArg>::type_t;
+    using ret = typename function_traits<typename BaseTrait::signature>::return_t;
 };
 } // namespace detail
 

@@ -13,16 +13,14 @@ struct Allocator
     struct allocate
     {
         MIXIN_ABILITY_METHOD(allocate);
-        using args = mixin::list<int /*size*/>;
-        using ret = void *;
+        using signature = void * (int);
         using parent = Allocator;
     };
 
     struct deallocate
     {
         MIXIN_ABILITY_METHOD(deallocate);
-        using args = mixin::list<void * /* buffer */>;
-        using ret = void;
+        using signature = void (void *);
         using parent = Allocator;
     };
 };

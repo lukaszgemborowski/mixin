@@ -17,6 +17,16 @@ struct method_traits<R (C::*)(Args...)>
     using args_list_t = list<Args...>;
 };
 
+template<class>
+struct function_traits;
+
+template<class R, class... Args>
+struct function_traits<R (Args...)>
+{
+    using return_t = R;
+    using args_list_t = list<Args...>;
+};
+
 } // namespace mixin
 
 #endif // MIXIN_FUNCTION_TRAITS_HPP
