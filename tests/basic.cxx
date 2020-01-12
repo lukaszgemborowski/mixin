@@ -3,14 +3,8 @@
 
 struct Fooable {};
 struct Barable {};
-struct Mathable {};
-struct Autocallable
-{
-    struct callable {
-        MIXIN_ABILITY_METHOD(callable);
-        using parent = Autocallable;
-        using signature = void(int);
-    };
+struct Mathable {
+    MIXIN_ABILITY_METHOD(Mathable, do_math, int (int, int));
 };
 
 template<class T>
@@ -29,13 +23,7 @@ struct FooIf : T
 
     int do_math(int a, int b)
     {
-        return execute(
-            this,
-            mixin::implements<Mathable>{},
-            [this, a, b](auto &impl) {
-                return impl.do_math(*this, a, b);
-            }
-        );
+        return mixin::execute_ability<Mathable::do_math>(this, a, b);
     }
 };
 
@@ -51,11 +39,6 @@ struct BarIf : T
                 impl.bar(*this);
             }
         );
-    }
-
-    void callable(int value)
-    {
-        mixin::for_each_ability<Autocallable::callable>(this, value);
     }
 };
 
@@ -88,23 +71,10 @@ struct DoSomeMath
     }
 };
 
-struct CallableImpl
-{
-    using implements = mixin::list<Autocallable>;
-
-    template<class A>
-    void callable(A &, int value)
-    {
-        calledValue = value;
-    }
-
-    int calledValue = 0;
-};
-
 TEST_CASE("Can call interface methods", "[mixin][composite]")
 {
     auto comp = mixin::make_composite<FooIf, BarIf>(
-        ImplementingFooAndBar{}, DoSomeMath{}, CallableImpl{}
+        ImplementingFooAndBar{}, DoSomeMath{}
     );
 
     auto &impl = comp.get<ImplementingFooAndBar>();
@@ -123,8 +93,4 @@ TEST_CASE("Can call interface methods", "[mixin][composite]")
     REQUIRE(impl.barCalled == true);
 
     REQUIRE(comp.do_math(40, 2) == 42);
-
-    auto &c = comp.get<CallableImpl>();
-    comp.callable(42);
-    REQUIRE(c.calledValue == 42);
 }

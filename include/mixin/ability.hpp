@@ -59,8 +59,15 @@ auto CallIfTraitMatch(C &c, B& base, Args... args) -> typename T::ret
 
 } // namespace mixin
 
-#define MIXIN_ABILITY_METHOD(NAME) \
+#define MIXIN_ABILITY_METHOD_NAME(NAME) \
     template<class C, class B> constexpr static auto addr() { return &C::template NAME<B>; }; \
     template<class C, class B> using name = decltype(&C::template NAME<B>);
+
+#define MIXIN_ABILITY_METHOD(BASE, MNAME, ...) \
+    struct MNAME { \
+        MIXIN_ABILITY_METHOD_NAME(MNAME); \
+        using signature = __VA_ARGS__; \
+        using parent = BASE; \
+    };
 
 #endif // MIXIN_ABILITY_HPP

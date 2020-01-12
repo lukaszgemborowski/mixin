@@ -10,28 +10,13 @@ namespace ability
 // - void deallocate(void *)
 struct Allocator
 {
-    struct allocate
-    {
-        MIXIN_ABILITY_METHOD(allocate);
-        using signature = void * (int);
-        using parent = Allocator;
-    };
-
-    struct deallocate
-    {
-        MIXIN_ABILITY_METHOD(deallocate);
-        using signature = void (void *);
-        using parent = Allocator;
-    };
+    MIXIN_ABILITY_METHOD(Allocator, allocate, void* (int));
+    MIXIN_ABILITY_METHOD(Allocator, deallocate, void (void*));
 };
 
 struct StaticContainer
 {
-    struct at
-    {
-        MIXIN_ABILITY_METHOD(at);
-        using args = mixin::list<std::size_t /* index */>;
-    };
+    MIXIN_ABILITY_METHOD(StaticContainer, at, std::size_t ());
 };
 
 }
