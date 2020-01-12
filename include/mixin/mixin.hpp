@@ -152,6 +152,28 @@ void for_each_ability(Base *self, Args&&... args)
     );
 }
 
+template<class Ability, class Base, class... Args>
+auto execute_ability(Base *self, Args&&... args)
+{
+    using sign_t = typename Base::sign_t;
+    using comp_t = typename sign_t::composite_t;
+    auto &impl = static_cast<comp_t *>(self)->impl;
+
+    auto result = tuple_select_ref<implements<typename Ability::parent>>(impl);
+
+    static_assert(
+        std::tuple_size_v<decltype(result)> == 1,
+        "can't execute more than 1 element"
+    );
+
+    using Trait = detail::Trait<Ability, Base &>;
+    return CallIfTraitMatch<Trait>(
+        std::get<0>(result),
+        *self,
+        std::forward<Args>(args)...
+    );
+}
+
 
 } // namespace mixin
 

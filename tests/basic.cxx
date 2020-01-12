@@ -9,6 +9,8 @@ struct Autocallable
     struct callable {
         MIXIN_ABILITY_METHOD(callable);
         using args = mixin::list<int>;
+        using ret = void;
+        using parent = Autocallable;
     };
 };
 

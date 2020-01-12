@@ -37,19 +37,24 @@ struct TraitCall
     template<class C, class B, class... Args>
     static auto call(C &c, B &b, Args... args)
     {
-        ((c).*( T::template addr<C, B>()))(b, args...);
+        return ((c).*( T::template addr<C, B>()))(b, args...);
     }
 };
 
+namespace detail
+{
+} // namespace detail
 
 template<class T, class C, class B, class... Args>
-void CallIfTraitMatch(C &c, B& base, Args... args)
+auto CallIfTraitMatch(C &c, B& base, Args... args) -> typename T::ret
 {
     if constexpr (TraitHasMethod<T>::template value<C, B>) {
         if constexpr (TraitMatchArgs<T>::template value<C, B>) {
-            TraitCall<T>::call(c, base, args...);
+            return TraitCall<T>::call(c, base, args...);
         }
     }
+
+    return typename T::ret ();
 }
 
 } // namespace mixin
