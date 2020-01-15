@@ -7,6 +7,7 @@
 namespace mixin
 {
 
+// test if given objects have a method defined by T
 template<class T>
 struct TraitHasMethod
 {
@@ -17,6 +18,8 @@ struct TraitHasMethod
     static constexpr bool value = std::is_same_v<std::true_type, decltype(Test<C, B>(nullptr))>;
 };
 
+// test if given object's method signature matches one defined by T
+// if TraitHasMethod::value == false this template is ill-formed
 template<class T>
 struct TraitMatchArgs
 {
@@ -31,6 +34,7 @@ struct TraitMatchArgs
         std::is_same_v<typename gc_t<C, B>::args_list_t, typename T::args>;
 };
 
+// call a method defined by T on a object of type C
 template<class T>
 struct TraitCall
 {
@@ -41,10 +45,8 @@ struct TraitCall
     }
 };
 
-namespace detail
-{
-} // namespace detail
-
+// call a method defined by T on a object of type C
+// only if class C have a method defined by T
 template<class T, class C, class B, class... Args>
 auto CallIfTraitMatch(C &c, B& base, Args... args) -> typename T::ret
 {

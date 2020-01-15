@@ -9,6 +9,7 @@ namespace mixin
 template<class>
 struct method_traits;
 
+// query information about member function signature
 template<class R, class C, class... Args>
 struct method_traits<R (C::*)(Args...)>
 {
@@ -20,6 +21,7 @@ struct method_traits<R (C::*)(Args...)>
 template<class>
 struct function_traits;
 
+// query information about function signature
 template<class R, class... Args>
 struct function_traits<R (Args...)>
 {
