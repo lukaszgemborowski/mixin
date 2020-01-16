@@ -5,58 +5,93 @@
 namespace ability
 {
 
-// Allocator ability requires two methods from implementation:
-// - void* allocate(int)
-// - void deallocate(void *)
+template<class T>
 struct Allocator
 {
-    MIXIN_ABILITY_METHOD(Allocator, allocate, void* (int));
-    MIXIN_ABILITY_METHOD(Allocator, deallocate, void (void*));
+    MIXIN_ABILITY_METHOD(Allocator, allocate, T* (int));
+    MIXIN_ABILITY_METHOD(Allocator, deallocate, void (T*));
 };
-
-struct StaticContainer
-{
-    MIXIN_ABILITY_METHOD(StaticContainer, at, std::size_t ());
-};
-
-}
 
 template<class T>
-struct AllocatorIF : T
+struct ArrayAccess
 {
-    void* allocate(int size)
+    MIXIN_ABILITY_METHOD(ArrayAccess, at, T& (std::size_t));
+};
+
+} // namespace ability
+
+template<class T, class Base>
+struct StaticContainerIF : Base
+{
+    T* allocate(int size)
     {
-        return mixin::execute_ability<ability::Allocator::allocate>(this, size);
+        return mixin::execute_ability<typename ability::Allocator<T>::allocate>(this, size);
     }
 
-    void deallocate(void *ptr)
+    void deallocate(T* ptr)
     {
-        mixin::execute_ability<ability::Allocator::deallocate>(this, ptr);
+        mixin::execute_ability<typename ability::Allocator<T>::deallocate>(this, ptr);
+    }
+
+    T& foo(std::size_t idx)
+    {
+        return mixin::execute_ability<typename ability::ArrayAccess<T>::at>(this, idx);
     }
 };
 
+template<class T>
 struct MallocAllocator
 {
-    using implements = mixin::list<ability::Allocator>;
+    using implements = mixin::list<ability::Allocator<T>>;
 
-    void *allocate(int size)
+    template<class Mixin>
+    T* allocate(Mixin &, int size)
     {
-        return malloc(size);
+        return static_cast<T *>(malloc(size * sizeof (T)));
     }
 
-    void deallocate(void *ptr)
+    template<class Mixin>
+    void deallocate(Mixin &, T* ptr)
     {
         free(ptr);
     }
 };
 
+template<class T>
+struct ArrayAccessor
+{
+    using implements = mixin::list<ability::ArrayAccess<T>>;
+
+    ArrayAccessor(std::size_t size)
+        : size {size}
+    {}
+
+    template<class Mixin>
+    T& at(Mixin &m, std::size_t idx)
+    {
+        if (!array) {
+            array = m.allocate(size);
+        }
+
+        return array[idx];
+    }
+
+private:
+    std::size_t size = 0u;
+    T *array = nullptr;
+};
+
+template<class Base> using IntContainer = StaticContainerIF<int, Base>;
+using IntAllocatorAbility = ability::Allocator<int>;
+using IntArrayAbility = ability::ArrayAccess<int>;
+using IntAllocator = MallocAllocator<int>;
+using IntArray = ArrayAccessor<int>;
+
 TEST_CASE("Can allocate and deallocate", "[example]")
 {
-    auto mix = mixin::make_composite<AllocatorIF>(
-        MallocAllocator{}
+    auto mix = mixin::make_composite<IntContainer>(
+        IntAllocator{}, IntArray{100}
     );
 
-    auto &impl = mix.get<MallocAllocator>();
-
-    mix.allocate(42);
+    mix.foo(42);
 }

@@ -39,7 +39,7 @@ template<class T>
 struct TraitCall
 {
     template<class C, class B, class... Args>
-    static auto call(C &c, B &b, Args... args)
+    static decltype(auto) call(C &c, B &b, Args... args)
     {
         return ((c).*( T::template addr<C, B>()))(b, args...);
     }
@@ -48,15 +48,13 @@ struct TraitCall
 // call a method defined by T on a object of type C
 // only if class C have a method defined by T
 template<class T, class C, class B, class... Args>
-auto CallIfTraitMatch(C &c, B& base, Args... args) -> typename T::ret
+decltype(auto) CallIfTraitMatch(C &c, B& base, Args... args) // -> typename T::ret
 {
     if constexpr (TraitHasMethod<T>::template value<C, B>) {
         if constexpr (TraitMatchArgs<T>::template value<C, B>) {
             return TraitCall<T>::call(c, base, args...);
         }
     }
-
-    return typename T::ret ();
 }
 
 } // namespace mixin

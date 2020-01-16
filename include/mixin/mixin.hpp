@@ -156,7 +156,7 @@ void for_each_ability(Base *self, Args&&... args)
 }
 
 template<class Ability, class Base, class... Args>
-auto execute_ability(Base *self, Args&&... args)
+decltype(auto) execute_ability(Base *self, Args&&... args)
 {
     using sign_t = typename Base::sign_t;
     using comp_t = typename sign_t::composite_t;
