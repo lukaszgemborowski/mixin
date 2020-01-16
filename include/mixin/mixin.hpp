@@ -10,6 +10,22 @@
 
 namespace mixin
 {
+
+namespace ability
+{
+
+struct constructible
+{
+    MIXIN_ABILITY_METHOD(constructible, ctor, void ());
+};
+
+struct destructible
+{
+    MIXIN_ABILITY_METHOD(destructible, dtor, void ());
+};
+
+} // ability
+
 template<class... Impl>
 struct impl
 {
@@ -56,10 +72,22 @@ struct composite<impl<Impl...>, iface<Iface...>>
     : public interface_base<
         composite_signature<impl<Impl...>, iface<Iface...>>, Iface...>
 {
-    composite() = default;
+    composite()
+        : impl {}
+    {
+        construct();
+    }
+
     composite(Impl&&... init)
         : impl{std::forward<Impl>(init)...}
-    {}
+    {
+        construct();
+    }
+
+    ~composite()
+    {
+        destruct();
+    }
 
     template<class T>
     auto & get()
@@ -68,6 +96,10 @@ struct composite<impl<Impl...>, iface<Iface...>>
     }
 
     typename impl<Impl...>::tuple_t impl;
+
+private:
+    void construct();
+    void destruct();
 };
 
 template<
@@ -177,6 +209,19 @@ decltype(auto) execute_ability(Base *self, Args&&... args)
     );
 }
 
+template<class... Impl,
+         template<typename> typename... Iface>
+void composite<impl<Impl...>, iface<Iface...>>::construct()
+{
+    for_each_ability<ability::constructible::ctor>(this);
+}
+
+template<class... Impl,
+         template<typename> typename... Iface>
+void composite<impl<Impl...>, iface<Iface...>>::destruct()
+{
+    for_each_ability<ability::destructible::dtor>(this);
+}
 
 } // namespace mixin
 

@@ -33,7 +33,7 @@ struct StaticContainerIF : Base
         mixin::execute_ability<typename ability::Allocator<T>::deallocate>(this, ptr);
     }
 
-    T& foo(std::size_t idx)
+    T& at(std::size_t idx)
     {
         return mixin::execute_ability<typename ability::ArrayAccess<T>::at>(this, idx);
     }
@@ -60,19 +60,31 @@ struct MallocAllocator
 template<class T>
 struct ArrayAccessor
 {
-    using implements = mixin::list<ability::ArrayAccess<T>>;
+    using implements = mixin::list<
+        ability::ArrayAccess<T>,
+        mixin::ability::constructible,
+        mixin::ability::destructible
+    >;
 
     ArrayAccessor(std::size_t size)
         : size {size}
     {}
 
     template<class Mixin>
+    void ctor(Mixin &m)
+    {
+        array = m.allocate(size);
+    }
+
+    template<class Mixin>
+    void dtor(Mixin &m)
+    {
+        m.deallocate(array);
+    }
+
+    template<class Mixin>
     T& at(Mixin &m, std::size_t idx)
     {
-        if (!array) {
-            array = m.allocate(size);
-        }
-
         return array[idx];
     }
 
@@ -93,5 +105,6 @@ TEST_CASE("Can allocate and deallocate", "[example]")
         IntAllocator{}, IntArray{100}
     );
 
-    mix.foo(42);
+    mix.at(42) = 42;
+    REQUIRE(mix.at(42) == 42);
 }
