@@ -1,7 +1,6 @@
 #include <mixin/mixin.hpp>
 #include "catch.hpp"
 
-// define abilities
 namespace ability
 {
 
@@ -41,6 +40,23 @@ struct IntMallocAllocator
     void deallocate(Mixin &, int* ptr)
     {
         free(ptr);
+    }
+};
+
+struct IntNewDelAllocator
+{
+    using implements = mixin::list<ability::IntAllocator>;
+
+    template<class Mixin>
+    int* allocate(Mixin &, int size)
+    {
+        return new int[size];
+    }
+
+    template<class Mixin>
+    void deallocate(Mixin &, int* ptr)
+    {
+        delete [] ptr;
     }
 };
 
@@ -84,6 +100,17 @@ TEST_CASE("Create int container with malloc backed allocator", "[example]")
     auto mix = mixin::make_composite<IntContainerInterface>(
         IntStorageAccess{100},
         IntMallocAllocator{}
+    );
+
+    mix.at(42) = 42;
+    REQUIRE(mix.at(42) == 42);
+}
+
+TEST_CASE("Create int container with new/delete backed allocator", "[exemple]")
+{
+    auto mix = mixin::make_composite<IntContainerInterface>(
+        IntStorageAccess{100},
+        IntNewDelAllocator{}
     );
 
     mix.at(42) = 42;
