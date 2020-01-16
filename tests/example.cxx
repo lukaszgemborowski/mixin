@@ -5,104 +5,85 @@
 namespace ability
 {
 
-template<class T>
-struct Allocator
+struct IntAllocator
 {
-    MIXIN_ABILITY_METHOD(Allocator, allocate, T* (int));
-    MIXIN_ABILITY_METHOD(Allocator, deallocate, void (T*));
+    MIXIN_ABILITY_METHOD(IntAllocator, allocate, int* (int));
+    MIXIN_ABILITY_METHOD(IntAllocator, deallocate, void (int *));
 };
 
-template<class T>
-struct ArrayAccess
+struct IntArrayAccess
 {
-    MIXIN_ABILITY_METHOD(ArrayAccess, at, T& (std::size_t));
+    MIXIN_ABILITY_METHOD(IntArrayAccess, at, int& (std::size_t));
 };
 
 } // namespace ability
 
-template<class T, class Base>
-struct StaticContainerIF : Base
+template<class T>
+struct IntContainerInterface : T
 {
-    T* allocate(int size)
+    int& at(std::size_t idx)
     {
-        return mixin::execute_ability<typename ability::Allocator<T>::allocate>(this, size);
-    }
-
-    void deallocate(T* ptr)
-    {
-        mixin::execute_ability<typename ability::Allocator<T>::deallocate>(this, ptr);
-    }
-
-    T& at(std::size_t idx)
-    {
-        return mixin::execute_ability<typename ability::ArrayAccess<T>::at>(this, idx);
+        return mixin::execute_ability<ability::IntArrayAccess::at>(this, idx);
     }
 };
 
-template<class T>
-struct MallocAllocator
+struct IntMallocAllocator
 {
-    using implements = mixin::list<ability::Allocator<T>>;
+    using implements = mixin::list<ability::IntAllocator>;
 
     template<class Mixin>
-    T* allocate(Mixin &, int size)
+    int* allocate(Mixin &, int size)
     {
-        return static_cast<T *>(malloc(size * sizeof (T)));
+        return static_cast<int *>(malloc(size * sizeof (int)));
     }
 
     template<class Mixin>
-    void deallocate(Mixin &, T* ptr)
+    void deallocate(Mixin &, int* ptr)
     {
         free(ptr);
     }
 };
 
-template<class T>
-struct ArrayAccessor
+struct IntStorageAccess
 {
     using implements = mixin::list<
-        ability::ArrayAccess<T>,
+        ability::IntArrayAccess,
         mixin::ability::constructible,
         mixin::ability::destructible
     >;
 
-    ArrayAccessor(std::size_t size)
+    IntStorageAccess(std::size_t size)
         : size {size}
     {}
 
     template<class Mixin>
     void ctor(Mixin &m)
     {
-        array = m.allocate(size);
+        array = mixin::execute_ability<ability::IntAllocator::allocate>(&m, size);
     }
 
     template<class Mixin>
     void dtor(Mixin &m)
     {
-        m.deallocate(array);
+        mixin::execute_ability<ability::IntAllocator::deallocate>(&m, array);
     }
 
     template<class Mixin>
-    T& at(Mixin &m, std::size_t idx)
+    int& at(Mixin &m, std::size_t idx)
     {
         return array[idx];
     }
 
 private:
     std::size_t size = 0u;
-    T *array = nullptr;
+    int *array = nullptr;
 };
 
-template<class Base> using IntContainer = StaticContainerIF<int, Base>;
-using IntAllocatorAbility = ability::Allocator<int>;
-using IntArrayAbility = ability::ArrayAccess<int>;
-using IntAllocator = MallocAllocator<int>;
-using IntArray = ArrayAccessor<int>;
-
-TEST_CASE("Can allocate and deallocate", "[example]")
+TEST_CASE("Create int container with malloc backed allocator", "[example]")
 {
-    auto mix = mixin::make_composite<IntContainer>(
-        IntAllocator{}, IntArray{100}
+    auto mix = mixin::make_composite<IntContainerInterface>(
+        IntStorageAccess{100},
+        IntMallocAllocator{}
     );
 
     mix.at(42) = 42;
