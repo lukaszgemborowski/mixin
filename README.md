@@ -14,14 +14,14 @@ You can learn the idea and key concepts from the talk itself.
 
 Before using mixin you need to include the library:
 
-```
+```cpp
 #include <mixin/mixin.hpp>
 ```
 
 Each mixin (or composite) consists of an interface classes and implementation classes. All public methods of interface classes
 creates a mixin interface. Interface class is a template class which inherits its template parameter:
 
-```
+```cpp
 template<class T>
 struct IntContainerInterface : T
 {
@@ -35,7 +35,7 @@ struct IntContainerInterface : T
 in that case we define an interface class with a single method `at`. The intention is to have an accesor to an int container. To
 define this method we need to have an ability defined, so before the `at` defintion we need:
 
-```
+```cpp
 namespace ability
 {
 struct IntArrayAccess
@@ -47,7 +47,7 @@ struct IntArrayAccess
 
 no we can get back to `at` method definition:
 
-```
+```cpp
     int& at(std::size_t idx)
     {
         return mixin::execute_ability<ability::IntArrayAccess::at>(this, idx);
@@ -59,7 +59,7 @@ getting single std::size_t parameter and returning reference to an int. This is 
 implementation class and not by the interface class, but for consistency we define the interface class the same way. We will
 need one more ability, an allocator ability:
 
-```
+```cpp
 namespace ability
 {
 struct IntAllocator
@@ -73,7 +73,7 @@ struct IntAllocator
 the pattern is the same as for `IntArrayAccess` ability, the only difference is that the `IntAllocator` ability requires
 two methods from the implementation: `allocate` and `deallocate`. The main part of the mixin will be storage access implementation:
 
-```
+```cpp
 struct IntStorageAccess
 {
     using implements = mixin::list<
@@ -117,7 +117,7 @@ private:
 
 now we can define a simple implementation or even different implementations for IntAllocator ability:
 
-```
+```cpp
 struct IntMallocAllocator
 {
     using implements = mixin::list<ability::IntAllocator>;
@@ -155,7 +155,7 @@ struct IntNewDelAllocator
 
 with all the classes we can create a mixin consisting of defined elements, eg:
 
-```
+```cpp
 auto mix = mixin::make_composite<IntContainerInterface>(
     IntStorageAccess{100},
     IntMallocAllocator{}
@@ -164,7 +164,7 @@ auto mix = mixin::make_composite<IntContainerInterface>(
 
 for a container backed by malloc allocator, or:
 
-```
+```cpp
 auto mix = mixin::make_composite<IntContainerInterface>(
     IntStorageAccess{100},
     IntNewDelAllocator{}
@@ -173,7 +173,7 @@ auto mix = mixin::make_composite<IntContainerInterface>(
 
 for a container backed by a new/delete allocator. Both objects have exactly the same interface thanks to `IntContainerInterface`.
 
-```
+```cpp
 mix.at(0) = 42;
 auto foo = mix.at(0);
 ```
