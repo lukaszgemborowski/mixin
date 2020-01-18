@@ -3,6 +3,11 @@
 Compile time composite of arbitrary number of interfaces and implementations,
 glued together with a concept of ability.
 
+## State
+
+Currently the library is unstable and in "testing" state. You may encounter different bugs and weird
+compilation errors.
+
 ## Inspiration
 This repository and code is heavily inspired by Odin Holmes' C++ Mixin talk, watch it here:
 
@@ -45,7 +50,7 @@ struct IntArrayAccess
 } // namespace ability
 ```
 
-no we can get back to `at` method definition:
+no we can get back and implement interface `at` method:
 
 ```cpp
     int& at(std::size_t idx)
