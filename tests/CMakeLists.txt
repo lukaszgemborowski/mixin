@@ -3,6 +3,8 @@ add_executable(
     main.cxx
     basic.cxx
     tuple_select.cxx
+    ability.cxx
+    example.cxx
 )
 
 target_include_directories(

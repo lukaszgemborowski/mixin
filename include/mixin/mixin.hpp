@@ -3,12 +3,29 @@
 
 #include <mixin/tuple_for_each.hpp>
 #include <mixin/tuple_select.hpp>
+#include <mixin/ability.hpp>
 #include <mixin/list.hpp>
 #include <tuple>
 #include <type_traits>
 
 namespace mixin
 {
+
+namespace ability
+{
+
+struct constructible
+{
+    MIXIN_ABILITY_METHOD(constructible, ctor, void ());
+};
+
+struct destructible
+{
+    MIXIN_ABILITY_METHOD(destructible, dtor, void ());
+};
+
+} // ability
+
 template<class... Impl>
 struct impl
 {
@@ -55,10 +72,22 @@ struct composite<impl<Impl...>, iface<Iface...>>
     : public interface_base<
         composite_signature<impl<Impl...>, iface<Iface...>>, Iface...>
 {
-    composite() = default;
+    composite()
+        : impl {}
+    {
+        construct();
+    }
+
     composite(Impl&&... init)
         : impl{std::forward<Impl>(init)...}
-    {}
+    {
+        construct();
+    }
+
+    ~composite()
+    {
+        destruct();
+    }
 
     template<class T>
     auto & get()
@@ -67,6 +96,10 @@ struct composite<impl<Impl...>, iface<Iface...>>
     }
 
     typename impl<Impl...>::tuple_t impl;
+
+private:
+    void construct();
+    void destruct();
 };
 
 template<
@@ -86,6 +119,12 @@ struct implements
 {
     template<class Q>
     using invoke = list_has<typename Q::implements, T>;
+};
+
+struct all
+{
+    template<class>
+    using invoke = std::true_type;
 };
 
 template<class Base, class Selector, class F>
@@ -123,6 +162,66 @@ auto execute(Base *self, Selector sel, F fun)
     return fun(std::get<0>(result));
 }
 
+namespace detail
+{
+template<class BaseTrait, class FirstArg>
+struct Trait : BaseTrait {
+    using base_args = typename function_traits<typename BaseTrait::signature>::args_list_t;
+
+    using args = typename list_push_front<base_args, FirstArg>::type_t;
+    using ret = typename function_traits<typename BaseTrait::signature>::return_t;
+};
+} // namespace detail
+
+template<class Ability, class Base, class... Args>
+void for_each_ability(Base *self, Args&&... args)
+{
+    using Trait = detail::Trait<Ability, Base &>;
+
+    for_each(
+        self,
+        all {},
+        [self, &args...](auto &e) {
+            CallIfTraitMatch<Trait>(e, *self, std::forward<Args>(args)...);
+        }
+    );
+}
+
+template<class Ability, class Base, class... Args>
+decltype(auto) execute_ability(Base *self, Args&&... args)
+{
+    using sign_t = typename Base::sign_t;
+    using comp_t = typename sign_t::composite_t;
+    auto &impl = static_cast<comp_t *>(self)->impl;
+
+    auto result = tuple_select_ref<implements<typename Ability::parent>>(impl);
+
+    static_assert(
+        std::tuple_size_v<decltype(result)> == 1,
+        "can't execute more than 1 element"
+    );
+
+    using Trait = detail::Trait<Ability, Base &>;
+    return CallIfTraitMatch<Trait>(
+        std::get<0>(result),
+        *self,
+        std::forward<Args>(args)...
+    );
+}
+
+template<class... Impl,
+         template<typename> typename... Iface>
+void composite<impl<Impl...>, iface<Iface...>>::construct()
+{
+    for_each_ability<ability::constructible::ctor>(this);
+}
+
+template<class... Impl,
+         template<typename> typename... Iface>
+void composite<impl<Impl...>, iface<Iface...>>::destruct()
+{
+    for_each_ability<ability::destructible::dtor>(this);
+}
 
 } // namespace mixin
 

@@ -3,7 +3,9 @@
 
 struct Fooable {};
 struct Barable {};
-struct Mathable {};
+struct Mathable {
+    MIXIN_ABILITY_METHOD(Mathable, do_math, int (int, int));
+};
 
 template<class T>
 struct FooIf : T
@@ -21,13 +23,7 @@ struct FooIf : T
 
     int do_math(int a, int b)
     {
-        return execute(
-            this,
-            mixin::implements<Mathable>{},
-            [this, a, b](auto &impl) {
-                return impl.do_math(*this, a, b);
-            }
-        );
+        return mixin::execute_ability<Mathable::do_math>(this, a, b);
     }
 };
 
@@ -74,11 +70,6 @@ struct DoSomeMath
         return a + b;
     }
 };
-
-using Composite = mixin::composite<
-    mixin::impl<ImplementingFooAndBar, DoSomeMath>,
-    mixin::iface<FooIf, BarIf>
->;
 
 TEST_CASE("Can call interface methods", "[mixin][composite]")
 {
