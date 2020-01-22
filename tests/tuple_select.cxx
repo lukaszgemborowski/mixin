@@ -28,3 +28,10 @@ TEST_CASE("Reference to ints", "[tuple_select]")
     REQUIRE(std::get<0>(t2) == 10);
     REQUIRE(std::get<1>(t2) == 20);
 }
+
+TEST_CASE("Count types in tuple", "[tuple_select]")
+{
+    std::tuple<int, float, double, int> t1 {1, 2.f, 3.0, 4};
+
+    REQUIRE(mixin::tuple_select_size<select_type<int>>(t1) == 2);
+}

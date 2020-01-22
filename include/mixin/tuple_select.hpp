@@ -37,6 +37,23 @@ auto tuple_select_ref(Tuple &tuple, std::index_sequence<Idx...>)
         )...
     );
 }
+
+template<class Select, class Tuple, std::size_t I>
+constexpr int count_type_if()
+{
+    if constexpr (Select::template invoke<std::tuple_element_t<I, Tuple>>::value == true)
+        return 1;
+    else
+        return 0;
+}
+
+template<class Select, class Tuple, std::size_t... Idx>
+constexpr auto tuple_select_size(std::index_sequence<Idx...>)
+{
+    return (0 + ... + count_type_if<Select, Tuple, Idx>());
+}
+
+
 } // namespace detail
 
 template<class Select, class Tuple>
@@ -44,6 +61,14 @@ auto tuple_select_ref(Tuple &tuple)
 {
     return detail::tuple_select_ref<Select, Tuple>(
         tuple,
+        std::make_index_sequence<std::tuple_size_v<Tuple>>{}
+    );
+}
+
+template<class Select, class Tuple>
+constexpr auto tuple_select_size(const Tuple &t)
+{
+    return detail::tuple_select_size<Select, Tuple>(
         std::make_index_sequence<std::tuple_size_v<Tuple>>{}
     );
 }
