@@ -74,7 +74,8 @@ struct DoSomeMath
 TEST_CASE("Can call interface methods", "[mixin][composite]")
 {
     auto comp = mixin::make_composite<FooIf, BarIf>(
-        ImplementingFooAndBar{}, DoSomeMath{}
+        mixin::impl<ImplementingFooAndBar>(),
+        mixin::impl<DoSomeMath>()
     );
 
     auto &impl = comp.get<ImplementingFooAndBar>();

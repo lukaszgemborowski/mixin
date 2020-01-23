@@ -103,15 +103,41 @@ private:
     void destruct();
 };
 
+template<class T, class... Args>
+struct impl_init
+{
+    using type = T;
+
+    impl_init(Args&&... args)
+        : ctorArguments {args...}
+    {
+    }
+
+    auto create()
+    {
+        return std::make_from_tuple<T>(ctorArguments);
+    }
+
+    // FIXME: TODO: needs to properly deduce the types here to avoid copying
+    std::tuple<Args...> ctorArguments;
+};
+
+template<class T, class... Args>
+auto impl(Args&&... args)
+{
+    return impl_init<T, Args...>{std::forward<Args>(args)...};
+}
+
 template<
     template<typename> typename... Iface,
     typename... Impl>
 auto make_composite(Impl&&... init)
 {
+    // this should work for regular type also
     return composite<
-        ImplList<Impl...>,
+        ImplList<typename Impl::type ...>,
         iface<Iface...>
-    >{std::forward<Impl>(init)...};
+    >{init.create()...};
 }
 
 // accessors

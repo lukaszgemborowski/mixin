@@ -98,8 +98,8 @@ private:
 TEST_CASE("Create int container with malloc backed allocator", "[example]")
 {
     auto mix = mixin::make_composite<IntContainerInterface>(
-        IntStorageAccess{100},
-        IntMallocAllocator{}
+        mixin::impl<IntStorageAccess>(100),
+        mixin::impl<IntMallocAllocator>()
     );
 
     mix.at(42) = 42;
@@ -109,8 +109,8 @@ TEST_CASE("Create int container with malloc backed allocator", "[example]")
 TEST_CASE("Create int container with new/delete backed allocator", "[exemple]")
 {
     auto mix = mixin::make_composite<IntContainerInterface>(
-        IntStorageAccess{100},
-        IntNewDelAllocator{}
+        mixin::impl<IntStorageAccess>(100),
+        mixin::impl<IntNewDelAllocator>()
     );
 
     mix.at(42) = 42;
