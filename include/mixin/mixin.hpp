@@ -3,6 +3,7 @@
 
 #include <mixin/tuple_for_each.hpp>
 #include <mixin/tuple_select.hpp>
+#include <mixin/is_template.hpp>
 #include <mixin/ability.hpp>
 #include <mixin/list.hpp>
 #include <tuple>
@@ -27,7 +28,7 @@ struct destructible
 } // ability
 
 template<class... Impl>
-struct impl
+struct ImplList
 {
     using tuple_t = std::tuple<Impl...>;
 };
@@ -68,9 +69,9 @@ struct interface_base<Sign, Last>
 template<
     class... Impl,
     template<typename> typename... Iface>
-struct composite<impl<Impl...>, iface<Iface...>>
+struct composite<ImplList<Impl...>, iface<Iface...>>
     : public interface_base<
-        composite_signature<impl<Impl...>, iface<Iface...>>, Iface...>
+        composite_signature<ImplList<Impl...>, iface<Iface...>>, Iface...>
 {
     composite()
         : impl {}
@@ -95,7 +96,7 @@ struct composite<impl<Impl...>, iface<Iface...>>
         return std::get<T>(impl);
     }
 
-    typename impl<Impl...>::tuple_t impl;
+    typename ImplList<Impl...>::tuple_t impl;
 
 private:
     void construct();
@@ -108,7 +109,7 @@ template<
 auto make_composite(Impl&&... init)
 {
     return composite<
-        impl<Impl...>,
+        ImplList<Impl...>,
         iface<Iface...>
     >{std::forward<Impl>(init)...};
 }
@@ -211,14 +212,14 @@ decltype(auto) execute_ability(Base *self, Args&&... args)
 
 template<class... Impl,
          template<typename> typename... Iface>
-void composite<impl<Impl...>, iface<Iface...>>::construct()
+void composite<ImplList<Impl...>, iface<Iface...>>::construct()
 {
     for_each_ability<ability::constructible::ctor>(this);
 }
 
 template<class... Impl,
          template<typename> typename... Iface>
-void composite<impl<Impl...>, iface<Iface...>>::destruct()
+void composite<ImplList<Impl...>, iface<Iface...>>::destruct()
 {
     for_each_ability<ability::destructible::dtor>(this);
 }
