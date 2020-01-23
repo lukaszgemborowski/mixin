@@ -5,6 +5,7 @@ add_executable(
     tuple_select.cxx
     ability.cxx
     example.cxx
+    is_template.cxx
 )
 
 target_include_directories(
