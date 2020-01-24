@@ -6,6 +6,7 @@ add_executable(
     ability.cxx
     example.cxx
     is_template.cxx
+    impl_init.cxx
 )
 
 target_include_directories(
