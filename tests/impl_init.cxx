@@ -11,7 +11,7 @@ struct Foo2 {
 TEST_CASE("Create object with no arguments in constructor", "[impl_init]")
 {
     auto i = mixin::impl<Foo>();
-    auto foo = i.create();
+    auto foo = i.create<void>();
 
     REQUIRE(std::is_same<Foo, decltype(foo)>::value);
 }
@@ -19,20 +19,25 @@ TEST_CASE("Create object with no arguments in constructor", "[impl_init]")
 TEST_CASE("Create object with single int argument", "[impl_init]")
 {
     auto i = mixin::impl<Foo2>(42);
-    auto foo = i.create();
+    auto foo = i.create<void>();
 
     REQUIRE(std::is_same<Foo2, decltype(foo)>::value);
     REQUIRE(foo.x == 42);
 }
 
 template<class T>
-struct Foo3
-{
-    Foo3(T arg) : arg {arg} {}
-    T arg;
+struct Foo3 {
+    Foo3(T v)
+        : value {v}
+    {}
+
+    T value;
 };
 
-TEST_CASE("Can wrap class template", "[impl_init]")
+TEST_CASE("Create template object", "[impl_init]")
 {
-    auto i = mixin::impl<Foo3>(2.3f);
+    auto i = mixin::impl<Foo3>(42);
+    auto foo = i.create<int>();
+
+    REQUIRE(foo.value == 42);
 }

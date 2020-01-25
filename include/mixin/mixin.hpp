@@ -106,6 +106,7 @@ private:
 template<class T, class... Args>
 struct impl_init
 {
+    template<class>
     using type = T;
 
     impl_init(Args&&... args)
@@ -113,9 +114,31 @@ struct impl_init
     {
     }
 
+    template<class>
     auto create()
     {
         return std::make_from_tuple<T>(ctorArguments);
+    }
+
+    // FIXME: TODO: needs to properly deduce the types here to avoid copying
+    std::tuple<Args...> ctorArguments;
+};
+
+template<template<typename> typename T, class... Args>
+struct impl_init_template
+{
+    template<class U>
+    using type = T<U>;
+
+    impl_init_template(Args&&... args)
+        : ctorArguments {args...}
+    {
+    }
+
+    template<class U>
+    auto create()
+    {
+        return std::make_from_tuple<T<U>>(ctorArguments);
     }
 
     // FIXME: TODO: needs to properly deduce the types here to avoid copying
@@ -128,16 +151,33 @@ auto impl(Args&&... args)
     return impl_init<T, Args...>{std::forward<Args>(args)...};
 }
 
+template<template<typename> typename T, class... Args>
+auto impl(Args&&... args)
+{
+    return impl_init_template<T, Args...>{std::forward<Args>(args)...};
+}
+
+template<class If, class Im>
+struct temp_info
+{
+    using implementation = Im;
+    using interface = If;
+};
+
 template<
     template<typename> typename... Iface,
     typename... Impl>
 auto make_composite(Impl&&... init)
 {
-    // this should work for regular type also
+    using inf = temp_info<
+        iface<Iface...>,
+        ImplList<Impl...>
+    >;
+
     return composite<
-        ImplList<typename Impl::type ...>,
+        ImplList<typename Impl::template type<inf> ...>,
         iface<Iface...>
-    >{init.create()...};
+    >{init.template create<inf>()...};
 }
 
 // accessors
