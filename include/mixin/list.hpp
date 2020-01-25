@@ -5,11 +5,29 @@
 
 namespace mixin
 {
+namespace mpl
+{
+template<class T>
+struct type_t
+{
+    using type = T;
+};
+
+template<class A, class B>
+constexpr bool is_same(A, B)
+{
+    return std::is_same<A, B>::value;
+}
+
+} // namespace mpl
+
 template<class... Item> struct list;
 template<class Head, class... Tail> struct list<Head, Tail...>
 {
     using head_t = Head;
     using tail_t = list<Tail...>;
+
+    static constexpr std::size_t size = 1 + sizeof...(Tail);
 };
 
 template<class List, class T> struct list_has
@@ -32,6 +50,27 @@ template<class L, class T> struct list_push_front {};
 template<class T, class... Args> struct list_push_front<list<Args...>, T>
 {
     using type_t = list<T, Args...>;
+};
+
+template<class List, class Fun>
+constexpr std::size_t list_count_if(List list, Fun fun)
+{
+    if constexpr (list.size == 1) {
+        return fun(mpl::type_t<typename List::head_t>{});
+    } else {
+        return fun(mpl::type_t<typename List::head_t>{}) + list_count_if(typename List::tail_t{}, fun);
+    }
+}
+
+template<class List, class Fun>
+struct list_count_if_t
+{
+    static constexpr std::size_t value = list_count_if(List{}, Fun{});
+};
+
+template<class T>
+constexpr auto list_is_type = [](auto t) constexpr {
+    return mpl::is_same(t, mpl::type_t<T>{});
 };
 
 } // namespace mixin

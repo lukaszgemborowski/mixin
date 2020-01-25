@@ -95,3 +95,23 @@ TEST_CASE("Can call interface methods", "[mixin][composite]")
 
     REQUIRE(comp.do_math(40, 2) == 42);
 }
+
+struct ImplA
+{
+    using implements = mixin::list<>;
+};
+
+template<class Info>
+struct TemplateImpl
+{
+    using implements = mixin::list<>;
+
+    static constexpr auto impl_a_count = mixin::info_count_impl<Info, ImplA>();
+};
+
+TEST_CASE("Inspect mixin from within impl class", "[mixin][composite]")
+{
+    auto comp = mixin::make_composite<FooIf>(
+        mixin::impl<TemplateImpl>()
+    );
+}

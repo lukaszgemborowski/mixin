@@ -31,10 +31,19 @@ template<class... Impl>
 struct ImplList
 {
     using tuple_t = std::tuple<Impl...>;
+    using list_t = list<Impl...>;
 };
 
-template<template<typename> typename...>
-struct iface {};
+template<template<typename> typename... T>
+struct iface {
+};
+
+template<class If, class Im>
+struct temp_info
+{
+    using implementation = Im;
+    using interface = If;
+};
 
 template<class Sign>
 struct top_hierarchy {
@@ -157,12 +166,14 @@ auto impl(Args&&... args)
     return impl_init_template<T, Args...>{std::forward<Args>(args)...};
 }
 
-template<class If, class Im>
-struct temp_info
+template<class Info, class T>
+constexpr auto info_count_impl()
 {
-    using implementation = Im;
-    using interface = If;
-};
+    return list_count_if(
+        typename Info::implementation::list_t{},
+        mixin::list_is_type<T>
+    );
+}
 
 template<
     template<typename> typename... Iface,

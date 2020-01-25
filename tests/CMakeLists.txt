@@ -7,6 +7,7 @@ add_executable(
     example.cxx
     is_template.cxx
     impl_init.cxx
+    list.cxx
 )
 
 target_include_directories(
