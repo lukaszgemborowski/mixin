@@ -142,7 +142,7 @@ struct impl_init
     using type = T;
 
     constexpr impl_init(Args&&... args)
-        : ctorArguments {args...}
+        : ctorArguments {std::forward<Args>(args)...}
     {
     }
 
@@ -163,7 +163,7 @@ struct impl_init_template
     using type = T<U>;
 
     constexpr impl_init_template(Args&&... args)
-        : ctorArguments {args...}
+        : ctorArguments {std::forward<Args>(args)...}
     {
     }
 
