@@ -10,19 +10,19 @@ namespace detail
 {
 
 template<class T>
-auto tupletize_if(T &item, std::true_type)
+constexpr auto tupletize_if(T &item, std::true_type)
 {
     return std::tuple<T &>{item};
 }
 
 template<class T>
-auto tupletize_if(T &, std::false_type)
+constexpr auto tupletize_if(T &, std::false_type)
 {
     return std::tuple<>{};
 }
 
 template<class Select, class Tuple, std::size_t... Idx>
-auto tuple_select_ref(Tuple &tuple, std::index_sequence<Idx...>)
+constexpr auto tuple_select_ref(Tuple &tuple, std::index_sequence<Idx...>)
 {
     return std::tuple_cat(
         tupletize_if(
@@ -57,7 +57,7 @@ constexpr auto tuple_select_size(std::index_sequence<Idx...>)
 } // namespace detail
 
 template<class Select, class Tuple>
-auto tuple_select_ref(Tuple &tuple)
+constexpr auto tuple_select_ref(Tuple &tuple)
 {
     return detail::tuple_select_ref<Select, Tuple>(
         tuple,

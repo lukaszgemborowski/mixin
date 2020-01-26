@@ -9,13 +9,13 @@ namespace detail
 {
 
 template<std::size_t I, class Tuple, class Fun>
-void tuple_for_each(Tuple &tuple, Fun &fun)
+constexpr void tuple_for_each(Tuple &tuple, Fun &fun)
 {
     fun(std::get<I>(tuple));
 }
 
 template<class Tuple, class Fun, std::size_t... Idx>
-void tuple_for_each(Tuple &tuple, Fun &fun, std::index_sequence<Idx...>)
+constexpr void tuple_for_each(Tuple &tuple, Fun &fun, std::index_sequence<Idx...>)
 {
     (tuple_for_each<Idx>(tuple, fun), ...);
 }
@@ -23,7 +23,7 @@ void tuple_for_each(Tuple &tuple, Fun &fun, std::index_sequence<Idx...>)
 } // namespace detail
 
 template<class Tuple, class Fun>
-void tuple_for_each(Tuple &tuple, Fun fun)
+constexpr void tuple_for_each(Tuple &tuple, Fun fun)
 {
     detail::tuple_for_each(
         tuple,
