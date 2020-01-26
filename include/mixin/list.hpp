@@ -19,8 +19,6 @@ constexpr bool is_same(A, B)
     return std::is_same<A, B>::value;
 }
 
-} // namespace mpl
-
 constexpr std::size_t LIST_MAX_ELEMENTS = (0xffffffff - 1);
 constexpr std::size_t LIST_NOT_FOUND = LIST_MAX_ELEMENTS + 1;
 
@@ -102,6 +100,7 @@ constexpr std::size_t list_find_index_if(List list, Fun fun)
     return detail::list_find_index_if(list, fun, 0);
 }
 
+} // namespace mpl
 } // namespace mixin
 
 #endif // MIXIN_LIST_HPP

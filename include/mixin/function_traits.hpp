@@ -15,7 +15,7 @@ struct method_traits<R (C::*)(Args...)>
 {
     using return_t = R;
     using class_t = C;
-    using args_list_t = list<Args...>;
+    using args_list_t = mpl::list<Args...>;
 };
 
 template<class>
@@ -26,7 +26,7 @@ template<class R, class... Args>
 struct function_traits<R (Args...)>
 {
     using return_t = R;
-    using args_list_t = list<Args...>;
+    using args_list_t = mpl::list<Args...>;
 };
 
 } // namespace mixin

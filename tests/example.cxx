@@ -28,7 +28,7 @@ struct IntContainerInterface : T
 
 struct IntMallocAllocator
 {
-    using implements = mixin::list<ability::IntAllocator>;
+    using implements = mixin::mpl::list<ability::IntAllocator>;
 
     template<class Mixin>
     int* allocate(Mixin &, int size)
@@ -45,7 +45,7 @@ struct IntMallocAllocator
 
 struct IntNewDelAllocator
 {
-    using implements = mixin::list<ability::IntAllocator>;
+    using implements = mixin::mpl::list<ability::IntAllocator>;
 
     template<class Mixin>
     int* allocate(Mixin &, int size)
@@ -62,7 +62,7 @@ struct IntNewDelAllocator
 
 struct IntStorageAccess
 {
-    using implements = mixin::list<
+    using implements = mixin::mpl::list<
         ability::IntArrayAccess,
         mixin::ability::constructible,
         mixin::ability::destructible

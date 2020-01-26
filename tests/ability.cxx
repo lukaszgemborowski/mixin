@@ -3,7 +3,7 @@
 
 struct Trait
 {
-    using args = mixin::list<int, char>;
+    using args = mixin::mpl::list<int, char>;
 
     template<class C, class B> constexpr static auto addr() { return &C::template bar<B>; }
     template<class C, class B> using name = decltype(&C::template bar<B>);

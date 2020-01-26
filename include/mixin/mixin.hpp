@@ -31,7 +31,7 @@ template<class... Impl>
 struct ImplList
 {
     using tuple_t = std::tuple<Impl...>;
-    using list_t = list<Impl...>;
+    using list_t = mpl::list<Impl...>;
 };
 
 template<template<typename> typename... T>
@@ -120,8 +120,8 @@ struct composite<ImplList<Impl...>, iface<Iface...>>
 
         using index = std::integral_constant<
             std::size_t,
-            mixin::list_find_index_if(
-                mixin::list<Impl...>{},
+            mixin::mpl::list_find_index_if(
+                mixin::mpl::list<Impl...>{},
                 functor
             )>;
 
@@ -198,7 +198,7 @@ constexpr auto info_count_impl()
             using impl_init_type = typename decltype(t)::type;
             using impl_type = typename impl_init_type::template type<void>;
 
-            return mixin::list_is_type<T>(mpl::type_t<impl_type>{});
+            return mixin::mpl::list_is_type<T>(mpl::type_t<impl_type>{});
         }
     );
 }
@@ -224,7 +224,7 @@ template<class T>
 struct implements
 {
     template<class Q>
-    using invoke = list_has<typename Q::implements, T>;
+    using invoke = mpl::list_has<typename Q::implements, T>;
 };
 
 struct all
@@ -274,7 +274,7 @@ template<class BaseTrait, class FirstArg>
 struct Trait : BaseTrait {
     using base_args = typename function_traits<typename BaseTrait::signature>::args_list_t;
 
-    using args = typename list_push_front<base_args, FirstArg>::type_t;
+    using args = typename mpl::list_push_front<base_args, FirstArg>::type_t;
     using ret = typename function_traits<typename BaseTrait::signature>::return_t;
 };
 } // namespace detail

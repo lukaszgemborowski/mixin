@@ -44,7 +44,7 @@ struct BarIf : T
 
 struct ImplementingFooAndBar
 {
-    using implements = mixin::list<Fooable, Barable>;
+    using implements = mixin::mpl::list<Fooable, Barable>;
 
     template<class A>
     void foo(A &) {
@@ -62,7 +62,7 @@ struct ImplementingFooAndBar
 
 struct DoSomeMath
 {
-    using implements = mixin::list<Mathable>;
+    using implements = mixin::mpl::list<Mathable>;
 
     template<class A>
     int do_math(A&, int a, int b)
@@ -98,13 +98,13 @@ TEST_CASE("Can call interface methods", "[mixin][composite]")
 
 struct ImplA
 {
-    using implements = mixin::list<>;
+    using implements = mixin::mpl::list<>;
 };
 
 template<class Info>
 struct TemplateImpl
 {
-    using implements = mixin::list<>;
+    using implements = mixin::mpl::list<>;
     static constexpr auto impl_a_count = mixin::info_count_impl<Info, ImplA>();
 };
 
