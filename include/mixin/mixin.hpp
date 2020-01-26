@@ -114,13 +114,15 @@ struct composite<ImplList<Impl...>, iface<Iface...>>
     template<template<typename> typename T>
     auto & get()
     {
+        constexpr auto functor = [](auto t) constexpr {
+            return match_template<T, typename decltype(t)::type>::value;
+        };
+
         using index = std::integral_constant<
             std::size_t,
             mixin::list_find_index_if(
                 mixin::list<Impl...>{},
-                [](auto t) constexpr {
-                    return match_template<T, typename decltype(t)::type>::value;
-                }
+                functor
             )>;
 
         return std::get<index::value>(impl);
