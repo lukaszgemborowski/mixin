@@ -2,6 +2,7 @@
 #define MIXIN_LIST_HPP
 
 #include <type_traits>
+#include <limits>
 
 namespace mixin
 {
@@ -19,7 +20,7 @@ constexpr bool is_same(A, B)
     return std::is_same<A, B>::value;
 }
 
-constexpr std::size_t LIST_MAX_ELEMENTS = (0xffffffff - 1);
+constexpr std::size_t LIST_MAX_ELEMENTS = (std::numeric_limits<std::size_t>::max() - 1);
 constexpr std::size_t LIST_NOT_FOUND = LIST_MAX_ELEMENTS + 1;
 
 template<class... Item> struct list {};
