@@ -63,12 +63,6 @@ constexpr std::size_t list_count_if(List list, Fun fun)
     }
 }
 
-template<class List, class Fun>
-struct list_count_if_t
-{
-    static constexpr std::size_t value = list_count_if(List{}, Fun{});
-};
-
 template<class T>
 constexpr auto list_is_type = [](auto t) constexpr {
     return mpl::is_same(t, mpl::type_t<T>{});
