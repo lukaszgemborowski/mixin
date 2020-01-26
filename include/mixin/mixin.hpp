@@ -75,6 +75,12 @@ struct interface_base<Sign, Last>
     using sign_t = Sign;
 };
 
+template<template<typename> typename, class>
+struct match_template : std::false_type {};
+
+template<template<typename> typename Q, class T>
+struct match_template<Q, Q<T>> : std::true_type {};
+
 template<
     class... Impl,
     template<typename> typename... Iface>
@@ -103,6 +109,21 @@ struct composite<ImplList<Impl...>, iface<Iface...>>
     auto & get()
     {
         return std::get<T>(impl);
+    }
+
+    template<template<typename> typename T>
+    auto & get()
+    {
+        using index = std::integral_constant<
+            std::size_t,
+            mixin::list_find_index_if(
+                mixin::list<Impl...>{},
+                [](auto t) constexpr {
+                    return match_template<T, typename decltype(t)::type>::value;
+                }
+            )>;
+
+        return std::get<index::value>(impl);
     }
 
     typename ImplList<Impl...>::tuple_t impl;
@@ -171,7 +192,12 @@ constexpr auto info_count_impl()
 {
     return list_count_if(
         typename Info::implementation::list_t{},
-        mixin::list_is_type<T>
+        [](auto t) constexpr {
+            using impl_init_type = typename decltype(t)::type;
+            using impl_type = typename impl_init_type::template type<void>;
+
+            return mixin::list_is_type<T>(mpl::type_t<impl_type>{});
+        }
     );
 }
 

@@ -105,13 +105,18 @@ template<class Info>
 struct TemplateImpl
 {
     using implements = mixin::list<>;
-
     static constexpr auto impl_a_count = mixin::info_count_impl<Info, ImplA>();
 };
 
 TEST_CASE("Inspect mixin from within impl class", "[mixin][composite]")
 {
     auto comp = mixin::make_composite<FooIf>(
-        mixin::impl<TemplateImpl>()
+        mixin::impl<TemplateImpl>(),
+        mixin::impl<ImplA>(),
+        mixin::impl<ImplA>(),
+        mixin::impl<ImplA>()
     );
+
+    auto &impl = comp.get<TemplateImpl>();
+    REQUIRE(impl.impl_a_count == 3);
 }
