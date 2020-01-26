@@ -81,7 +81,7 @@ two methods from the implementation: `allocate` and `deallocate`. The main part 
 ```cpp
 struct IntStorageAccess
 {
-    using implements = mixin::list<
+    using implements = mixin::mpl::list<
         ability::IntArrayAccess,        // we will provide at() method
         mixin::ability::constructible,  // internal mixin ability, will cause ctor() to be called
         mixin::ability::destructible    // internal mixin ability, will cause dtor() to be called
@@ -125,7 +125,7 @@ now we can define a simple implementation or even different implementations for 
 ```cpp
 struct IntMallocAllocator
 {
-    using implements = mixin::list<ability::IntAllocator>;
+    using implements = mixin::mpl::list<ability::IntAllocator>;
 
     template<class Mixin>
     int* allocate(Mixin &, int size)
@@ -142,7 +142,7 @@ struct IntMallocAllocator
 
 struct IntNewDelAllocator
 {
-    using implements = mixin::list<ability::IntAllocator>;
+    using implements = mixin::mpl::list<ability::IntAllocator>;
 
     template<class Mixin>
     int* allocate(Mixin &, int size)
@@ -162,8 +162,8 @@ with all the classes we can create a mixin consisting of defined elements, eg:
 
 ```cpp
 auto mix = mixin::make_composite<IntContainerInterface>(
-    IntStorageAccess{100},
-    IntMallocAllocator{}
+    mixin::impl<IntStorageAccess>{100},
+    mixin::impl<IntMallocAllocator>{}
 );
 ```
 
@@ -171,8 +171,8 @@ for a container backed by malloc allocator, or:
 
 ```cpp
 auto mix = mixin::make_composite<IntContainerInterface>(
-    IntStorageAccess{100},
-    IntNewDelAllocator{}
+    mixin::impl<IntStorageAccess>{100},
+    mixin::impl<IntNewDelAllocator>{}
 );
 ```
 

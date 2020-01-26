@@ -28,7 +28,7 @@ struct IntContainerInterface : T
 
 struct IntMallocAllocator
 {
-    using implements = mixin::list<ability::IntAllocator>;
+    using implements = mixin::mpl::list<ability::IntAllocator>;
 
     template<class Mixin>
     int* allocate(Mixin &, int size)
@@ -45,7 +45,7 @@ struct IntMallocAllocator
 
 struct IntNewDelAllocator
 {
-    using implements = mixin::list<ability::IntAllocator>;
+    using implements = mixin::mpl::list<ability::IntAllocator>;
 
     template<class Mixin>
     int* allocate(Mixin &, int size)
@@ -62,7 +62,7 @@ struct IntNewDelAllocator
 
 struct IntStorageAccess
 {
-    using implements = mixin::list<
+    using implements = mixin::mpl::list<
         ability::IntArrayAccess,
         mixin::ability::constructible,
         mixin::ability::destructible
@@ -98,8 +98,8 @@ private:
 TEST_CASE("Create int container with malloc backed allocator", "[example]")
 {
     auto mix = mixin::make_composite<IntContainerInterface>(
-        IntStorageAccess{100},
-        IntMallocAllocator{}
+        mixin::impl<IntStorageAccess>(100),
+        mixin::impl<IntMallocAllocator>()
     );
 
     mix.at(42) = 42;
@@ -109,8 +109,8 @@ TEST_CASE("Create int container with malloc backed allocator", "[example]")
 TEST_CASE("Create int container with new/delete backed allocator", "[exemple]")
 {
     auto mix = mixin::make_composite<IntContainerInterface>(
-        IntStorageAccess{100},
-        IntNewDelAllocator{}
+        mixin::impl<IntStorageAccess>(100),
+        mixin::impl<IntNewDelAllocator>()
     );
 
     mix.at(42) = 42;

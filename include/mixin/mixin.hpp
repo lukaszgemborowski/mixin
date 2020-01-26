@@ -3,6 +3,7 @@
 
 #include <mixin/tuple_for_each.hpp>
 #include <mixin/tuple_select.hpp>
+#include <mixin/is_template.hpp>
 #include <mixin/ability.hpp>
 #include <mixin/list.hpp>
 #include <tuple>
@@ -27,13 +28,22 @@ struct destructible
 } // ability
 
 template<class... Impl>
-struct impl
+struct ImplList
 {
     using tuple_t = std::tuple<Impl...>;
+    using list_t = mpl::list<Impl...>;
 };
 
-template<template<typename> typename...>
-struct iface {};
+template<template<typename> typename... T>
+struct iface {
+};
+
+template<class If, class Im>
+struct temp_info
+{
+    using implementation = Im;
+    using interface = If;
+};
 
 template<class Sign>
 struct top_hierarchy {
@@ -65,20 +75,26 @@ struct interface_base<Sign, Last>
     using sign_t = Sign;
 };
 
+template<template<typename> typename, class>
+struct match_template : std::false_type {};
+
+template<template<typename> typename Q, class T>
+struct match_template<Q, Q<T>> : std::true_type {};
+
 template<
     class... Impl,
     template<typename> typename... Iface>
-struct composite<impl<Impl...>, iface<Iface...>>
+struct composite<ImplList<Impl...>, iface<Iface...>>
     : public interface_base<
-        composite_signature<impl<Impl...>, iface<Iface...>>, Iface...>
+        composite_signature<ImplList<Impl...>, iface<Iface...>>, Iface...>
 {
-    composite()
+    constexpr composite()
         : impl {}
     {
         construct();
     }
 
-    composite(Impl&&... init)
+    constexpr composite(Impl&&... init)
         : impl{std::forward<Impl>(init)...}
     {
         construct();
@@ -90,27 +106,117 @@ struct composite<impl<Impl...>, iface<Iface...>>
     }
 
     template<class T>
-    auto & get()
+    constexpr auto & get()
     {
         return std::get<T>(impl);
     }
 
-    typename impl<Impl...>::tuple_t impl;
+    template<template<typename> typename T>
+    constexpr auto & get()
+    {
+        constexpr auto functor = [](auto t) constexpr {
+            return match_template<T, typename decltype(t)::type>::value;
+        };
+
+        using index = std::integral_constant<
+            std::size_t,
+            mixin::mpl::list_find_index_if(
+                mixin::mpl::list<Impl...>{},
+                functor
+            )>;
+
+        return std::get<index::value>(impl);
+    }
+
+    typename ImplList<Impl...>::tuple_t impl;
 
 private:
-    void construct();
-    void destruct();
+    constexpr void construct();
+    constexpr void destruct();
 };
+
+template<class T, class... Args>
+struct impl_init
+{
+    template<class>
+    using type = T;
+
+    constexpr impl_init(Args&&... args)
+        : ctorArguments {args...}
+    {
+    }
+
+    template<class>
+    constexpr auto create()
+    {
+        return std::make_from_tuple<T>(ctorArguments);
+    }
+
+    // FIXME: TODO: needs to properly deduce the types here to avoid copying
+    std::tuple<Args...> ctorArguments;
+};
+
+template<template<typename> typename T, class... Args>
+struct impl_init_template
+{
+    template<class U>
+    using type = T<U>;
+
+    constexpr impl_init_template(Args&&... args)
+        : ctorArguments {args...}
+    {
+    }
+
+    template<class U>
+    constexpr auto create()
+    {
+        return std::make_from_tuple<T<U>>(ctorArguments);
+    }
+
+    // FIXME: TODO: needs to properly deduce the types here to avoid copying
+    std::tuple<Args...> ctorArguments;
+};
+
+template<class T, class... Args>
+constexpr auto impl(Args&&... args)
+{
+    return impl_init<T, Args...>{std::forward<Args>(args)...};
+}
+
+template<template<typename> typename T, class... Args>
+constexpr auto impl(Args&&... args)
+{
+    return impl_init_template<T, Args...>{std::forward<Args>(args)...};
+}
+
+template<class Info, class T>
+constexpr auto info_count_impl()
+{
+    return list_count_if(
+        typename Info::implementation::list_t{},
+        [](auto t) constexpr {
+            using impl_init_type = typename decltype(t)::type;
+            using impl_type = typename impl_init_type::template type<void>;
+
+            return mixin::mpl::list_is_type<T>(mpl::type_t<impl_type>{});
+        }
+    );
+}
 
 template<
     template<typename> typename... Iface,
     typename... Impl>
-auto make_composite(Impl&&... init)
+constexpr auto make_composite(Impl&&... init)
 {
+    using inf = temp_info<
+        iface<Iface...>,
+        ImplList<Impl...>
+    >;
+
     return composite<
-        impl<Impl...>,
+        ImplList<typename Impl::template type<inf> ...>,
         iface<Iface...>
-    >{std::forward<Impl>(init)...};
+    >{init.template create<inf>()...};
 }
 
 // accessors
@@ -118,7 +224,7 @@ template<class T>
 struct implements
 {
     template<class Q>
-    using invoke = list_has<typename Q::implements, T>;
+    using invoke = mpl::list_has<typename Q::implements, T>;
 };
 
 struct all
@@ -128,7 +234,7 @@ struct all
 };
 
 template<class Base, class Selector, class F>
-void for_each(Base *self, Selector sel, F fun)
+constexpr void for_each(Base *self, Selector sel, F fun)
 {
     using sign_t = typename Base::sign_t;
     using comp_t = typename sign_t::composite_t;
@@ -147,7 +253,7 @@ void for_each(Base *self, Selector sel, F fun)
 }
 
 template<class Base, class Selector, class F>
-auto execute(Base *self, Selector sel, F fun)
+constexpr auto execute(Base *self, Selector sel, F fun)
 {
     using sign_t = typename Base::sign_t;
     using comp_t = typename sign_t::composite_t;
@@ -168,13 +274,13 @@ template<class BaseTrait, class FirstArg>
 struct Trait : BaseTrait {
     using base_args = typename function_traits<typename BaseTrait::signature>::args_list_t;
 
-    using args = typename list_push_front<base_args, FirstArg>::type_t;
+    using args = typename mpl::list_push_front<base_args, FirstArg>::type_t;
     using ret = typename function_traits<typename BaseTrait::signature>::return_t;
 };
 } // namespace detail
 
 template<class Ability, class Base, class... Args>
-void for_each_ability(Base *self, Args&&... args)
+constexpr void for_each_ability(Base *self, Args&&... args)
 {
     using Trait = detail::Trait<Ability, Base &>;
 
@@ -188,7 +294,7 @@ void for_each_ability(Base *self, Args&&... args)
 }
 
 template<class Ability, class Base, class... Args>
-decltype(auto) execute_ability(Base *self, Args&&... args)
+constexpr decltype(auto) execute_ability(Base *self, Args&&... args)
 {
     using sign_t = typename Base::sign_t;
     using comp_t = typename sign_t::composite_t;
@@ -211,14 +317,14 @@ decltype(auto) execute_ability(Base *self, Args&&... args)
 
 template<class... Impl,
          template<typename> typename... Iface>
-void composite<impl<Impl...>, iface<Iface...>>::construct()
+constexpr void composite<ImplList<Impl...>, iface<Iface...>>::construct()
 {
     for_each_ability<ability::constructible::ctor>(this);
 }
 
 template<class... Impl,
          template<typename> typename... Iface>
-void composite<impl<Impl...>, iface<Iface...>>::destruct()
+constexpr void composite<ImplList<Impl...>, iface<Iface...>>::destruct()
 {
     for_each_ability<ability::destructible::dtor>(this);
 }

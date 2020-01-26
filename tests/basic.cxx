@@ -44,7 +44,7 @@ struct BarIf : T
 
 struct ImplementingFooAndBar
 {
-    using implements = mixin::list<Fooable, Barable>;
+    using implements = mixin::mpl::list<Fooable, Barable>;
 
     template<class A>
     void foo(A &) {
@@ -62,7 +62,7 @@ struct ImplementingFooAndBar
 
 struct DoSomeMath
 {
-    using implements = mixin::list<Mathable>;
+    using implements = mixin::mpl::list<Mathable>;
 
     template<class A>
     int do_math(A&, int a, int b)
@@ -74,7 +74,8 @@ struct DoSomeMath
 TEST_CASE("Can call interface methods", "[mixin][composite]")
 {
     auto comp = mixin::make_composite<FooIf, BarIf>(
-        ImplementingFooAndBar{}, DoSomeMath{}
+        mixin::impl<ImplementingFooAndBar>(),
+        mixin::impl<DoSomeMath>()
     );
 
     auto &impl = comp.get<ImplementingFooAndBar>();
@@ -93,4 +94,29 @@ TEST_CASE("Can call interface methods", "[mixin][composite]")
     REQUIRE(impl.barCalled == true);
 
     REQUIRE(comp.do_math(40, 2) == 42);
+}
+
+struct ImplA
+{
+    using implements = mixin::mpl::list<>;
+};
+
+template<class Info>
+struct TemplateImpl
+{
+    using implements = mixin::mpl::list<>;
+    static constexpr auto impl_a_count = mixin::info_count_impl<Info, ImplA>();
+};
+
+TEST_CASE("Inspect mixin from within impl class", "[mixin][composite]")
+{
+    auto comp = mixin::make_composite<FooIf>(
+        mixin::impl<TemplateImpl>(),
+        mixin::impl<ImplA>(),
+        mixin::impl<ImplA>(),
+        mixin::impl<ImplA>()
+    );
+
+    auto &impl = comp.get<TemplateImpl>();
+    REQUIRE(impl.impl_a_count == 3);
 }
