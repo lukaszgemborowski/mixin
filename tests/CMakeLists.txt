@@ -8,6 +8,7 @@ add_executable(
     is_template.cxx
     impl_init.cxx
     list.cxx
+    tuple_at.cxx
 )
 
 target_include_directories(
