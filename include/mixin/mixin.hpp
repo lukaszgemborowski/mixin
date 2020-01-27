@@ -189,14 +189,33 @@ constexpr auto impl(Args&&... args)
     return impl_init_template<T, Args...>{std::forward<Args>(args)...};
 }
 
+template<class Info, class Fun>
+constexpr auto info_count_impl_if(Info, Fun fun)
+{
+    return mpl::list_count_if(
+        typename Info::implementation::list_t{},
+        [&fun](auto t) constexpr {
+            using impl_init_type = typename decltype(t)::type;
+            using impl_type = mpl::type_t<typename impl_init_type::template type<mpl::void_t>>;
+            return fun(impl_type{});
+        }
+    );
+}
+
+template<class Fun>
+constexpr auto info_count_impl_if(mpl::void_t, Fun fun)
+{
+    return 0;
+}
+
 template<class Info, class T>
 constexpr auto info_count_impl()
 {
-    return list_count_if(
+    return mpl::list_count_if(
         typename Info::implementation::list_t{},
         [](auto t) constexpr {
             using impl_init_type = typename decltype(t)::type;
-            using impl_type = typename impl_init_type::template type<void>;
+            using impl_type = typename impl_init_type::template type<mpl::void_t>;
 
             return mixin::mpl::list_is_type<T>(mpl::type_t<impl_type>{});
         }

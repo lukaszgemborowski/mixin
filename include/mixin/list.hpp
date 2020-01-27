@@ -14,6 +14,8 @@ struct type_t
     using type = T;
 };
 
+struct void_t {};
+
 template<class A, class B>
 constexpr bool is_same(A, B)
 {
