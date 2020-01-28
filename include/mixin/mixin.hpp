@@ -287,6 +287,16 @@ constexpr auto execute(Base *self, Selector sel, F fun)
     return fun(std::get<0>(result));
 }
 
+template<class Base, class Selector>
+constexpr auto select(Base *self, Selector sel)
+{
+    using sign_t = typename Base::sign_t;
+    using comp_t = typename sign_t::composite_t;
+    auto &impl = static_cast<comp_t *>(self)->impl;
+
+    return tuple_select_ref<Selector>(impl);
+}
+
 namespace detail
 {
 template<class BaseTrait, class FirstArg>
